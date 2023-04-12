@@ -9,31 +9,17 @@ struct Node {
     Node* parent;
 };
 
-// 그리드 맵 크기
-const int n = 12;
-
-// 그리드 맵
-int grid[n][n] = {
-    {0,0,0,0,0,0,0,0,0,0},
-    {0,0,1,1,1,0,0,0,0,0},
-    {0,0,0,0,1,0,0,0,0,0},
-    {0,0,0,0,1,0,0,0,0,0},
-    {0,0,0,0,1,0,0,0,0,0},
-    {0,0,0,0,1,0,0,0,0,0},
-    {0,0,0,0,1,0,0,0,0,0},
-    {0,0,0,0,1,0,0,0,0,0},
-    {0,0,0,0,1,0,0,0,0,0},
-    {0,0,0,0,0,0,0,0,0,0}
-};
-
 // 이동 방향
 int dx[4] = { 1, 0, -1, 0 };
 int dy[4] = { 0, 1, 0, -1 };
 
 // 최단 거리를 구하는 함수
-int shortestPath(Node* start, Node* end) {
+int shortestPath(Node* start, Node* end, int** grid, int n) {
     queue<Node*> q;
-    bool visited[n][n] = { false };
+    bool** visited = new bool* [n];
+    for (int i = 0; i < n; i++) {
+        visited[i] = new bool[n]();
+    }
 
     q.push(start);
     visited[start->x][start->y] = true;
@@ -53,24 +39,10 @@ int shortestPath(Node* start, Node* end) {
             }
             path.push_back(start);
 
-            // 경로 출력
-            for (int i = path.size() - 1; i >= 0; i--) {
-                cout << "---";
+            for (int i = 0; i < n; i++) {
+                delete[] visited[i];
             }
-            cout << endl;
-
-            for (int i = path.size() - 1; i >= 0; i--) {
-                cout << "(" << path[i]->x << ", " << path[i]->y << ")";
-                if (i > 0) {
-                    cout << " -> ";
-                }
-            }
-            cout << endl;
-
-            for (int i = path.size() - 1; i >= 0; i--) {
-                cout << "---";
-            }
-            cout << endl;
+            delete[] visited;
 
             return distance;
         }
@@ -91,98 +63,132 @@ int shortestPath(Node* start, Node* end) {
             }
         }
     }
+
     // 도달할 수 없는 경우
+    for (int i = 0; i < n; i++) {
+        delete[] visited[i];
+    }
+    delete[] visited;
+
     return -1;
 }
-// 그리드 맵과 경로를 출력하는 함수
-void printPath(Node* start, Node* end) {
-    // 경로를 저장할 배열 생성
-    int path[n][n] = { 0 };
 
-    // 맵 출력
-    for (int i = 0; i < n + 2; i++) {
-        for (int j = 0; j < n + 2; j++) {
-            if (i == 0 || i == n + 1 || j == 0 || j == n + 1) {
-                cout << "# ";
+// 그리드 맵과 경로를 출력하는 함수
+void printPath(Node* start, Node* end, int** grid, int n) {
+    // 경로 출력을 위해 경로를 저장하는 벡터 생성
+    vector<Node*> path;
+
+    // 도착지부터 시작점까지 이동하며 경로를 저장
+    Node* current = end;
+    while (current != nullptr) {
+        path.push_back(current);
+        current = current->parent;
+    }
+
+    //// 경로 출력
+    //for (int i = n - 1; i >= 0; i--) {
+    //    for (int j = 0; j < n; j++) {
+    //        if (i == start->x && j == start->y) {
+    //            cout << "S";
+    //        }
+    //        else if (i == end->x && j == end->y) {
+    //            cout << "E";
+    //        }
+    //        else if (grid[i][j] == 1) {
+    //            cout << "#";
+    //        }
+    //        else {
+    //            bool onPath = false;
+    //            for (Node* node : path) {
+    //                if (node->x == i && node->y == j) {
+    //                    cout << "*";
+    //                    onPath = true;
+    //                    break;
+    //                }
+    //            }
+    //            if (!onPath) {
+    //                cout << ".";
+    //            }
+    //        }
+    //    }
+    //    cout << endl;
+    //}
+    // 그리드 맵 출력
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            if (i == start->x && j == start->y) {
+                cout << "S";
             }
-            else if (i == start->x + 1 && j == start->y + 1) {
-                cout << "S ";
+            else if (i == end->x && j == end->y) {
+                cout << "E";
             }
-            else if (i == end->x + 1 && j == end->y + 1) {
-                cout << "E ";
-            }
-            else if (path[i - 1][j - 1] == 1) {
-                cout << "- ";
+            else if (grid[i][j] == 1) {
+                cout << "#";
             }
             else {
-                cout << (grid[i - 1][j - 1] ? "# " : "  ");
+                cout << ".";
             }
+            cout << " ";
         }
         cout << endl;
     }
+    cout << endl;
 }
-// 맵 생성
-void generate_map(int gridX, int gridY, char**& grid)
-{
-    grid = new char* [gridY];
-    for (int i = 0; i < gridY; i++) {
-        grid[i] = new char[gridX];
+int main() {
+    srand((unsigned int)time(NULL)); // 시드값 설정
+
+    int startX, startY, endX, endY;
+    cout << "시작점의 좌표를 입력하세요. ex) 1 1" << endl;
+    cin >> startX >> startY;
+    cout << "도착점의 좌표를 입력하세요. ex) 6 6" << endl;
+    cin >> endX >> endY;
+    const int n = 10;
+    int** grid = new int* [n];
+    for (int i = 0; i < n; i++) {
+        grid[i] = new int[n]();
     }
-    // 맵 초기화
-    for (int i = 0; i < gridY; i++) {
-        for (int j = 0; j < gridX; j++) {
-            grid[i][j] = '.';
+
+    // 장애물 생성
+    for (int i = 0; i < 5; i++) {
+        int x = rand() % n;
+        int y = rand() % n;
+        if (grid[x][y] == 0) {
+            grid[x][y] = 1;
         }
     }
-}
-// 랜덤 위치에 벽 추가
-void add_wall(int gridX, int gridY, char** grid) 
-{
-    int wall_x = rand() % gridX;
-    int wall_y = rand() % gridY;
-    grid[wall_y][wall_x] = '#';
-}
 
-
-
-int main() {
-
-    int startX, startY, endX, endY, gridX, gridY;
-    // 시작점과 끝점 생성
     Node* start = new Node();
-    Node* end = new Node();
-    char** grid;
-    cout << "맵의 크기를 정해주세요ex) (10 10) : ";
-    cin >> gridX >> gridY;
-
-    generate_map(gridX, gridY, grid);
-
-    cout << "시작점의 좌표를 입력해주세요ex) 5 4 : ";
-    cin >> startX >> startY;
-    cout << "도착점의 좌표를 입력해주세요ex) 7 7 : ";
-    cin >> endX >> endY;
     start->x = startX;
     start->y = startY;
-    start->parent = nullptr;
+
+    Node* end = new Node();
     end->x = endX;
     end->y = endY;
-    end->parent = nullptr;
 
-    printPath(start, end);
-    // 최단 거리 구하기
-    int distance = shortestPath(start, end);
+    printPath(start, end, grid, n);
 
+    cout << "Start: (" << start->x << ", " << start->y << ")" << endl;
+    cout << "End: (" << end->x << ", " << end->y << ")" << endl;
+
+    
+
+    int distance = shortestPath(start, end, grid, n);
     if (distance == -1) {
-        cout << "도달할 수 없습니다." << endl;
+        cout << "Cannot reach the destination." << endl;
     }
-    else
-    {
-        cout << "최단 거리는 " << distance << "입니다." << endl;
+    else {
+        cout << "Shortest distance: " << distance << endl;
     }
 
-    // 동적 할당된 노드 해제
+    // 동적할당한 메모리 해제
+    for (int i = 0; i < n; i++) {
+        delete[] grid[i];
+    }
+    delete[] grid;
+
     delete start;
     delete end;
 
     return 0;
 }
+
